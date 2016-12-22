@@ -22,24 +22,18 @@
 (defmethod read :alldocs
   [{:keys [state ast]} key params]
   (let [st @state]
-    (println "state on read: " st)
-    (println "ast: " ast)
-    (println "key: " key)
-    (println "params: " params)
+
    {:value (get st key []) 
     :pouchpull ast}))
   
 (defmulti mutate om/dispatch)
 
-(defmethod mutate 'putdoc
+(defmethod mutate `putdoc
   [{:keys [state ast]} key params]
-  (println "state" state)
-  (println "ast: " ast)
-  (println "key: " key)
-  (println "params" params)
+
   {:action
    (fn []
-     (println "action being called"))
+     (println "action being called: "params))
    :remote true
    :pouchput ast})
 
@@ -54,7 +48,6 @@
   (render [this]
     (let [{:keys [alldocs]} (om/props this)
           {:keys [todo-input]} (om/get-params this)]
-      (println "yoyoyoy: " alldocs)
       (dom/div nil
         (dom/h2 nil "Pouch Todos")
         (dom/ul nil
@@ -70,27 +63,28 @@
         (dom/button 
                     #js {:onClick
                          (fn [e]
-                            (om/transact! this '[(putdoc {:item ~todo-input})]))}
+                           (let [new-item (:todo-input (om/get-params this))]
+                            (om/transact! this `[(putdoc {:item ~new-item} :alldocs)])))}
                     "Add Todo")))))
 
 
-;; TODO add item to pouch, test a query with params to generalize alldocs, test collisions
-(defn send-to-chan [c]
-  (fn [{:keys [search ttest]} cb]
-    (when ttest
-      (println "here's the ttest" ttest)
-      (put! c "here we put stuff for pouch query"))
-    (when search
-      (let [{[search] :children} (om/query->ast search)
-            query (get-in search [:params :query])]
-        (put! c [query cb])))))
-
 (defn send-to-pouch [{:keys [pouchpull pouchput] :as remotes} cb]
-  (println "trying pouch send: " pouchput)
-  ;; (when pouchput
-    ;; (go
-      ;; (let [docs (<! (pouch/put-doc conn ))])))
+  (when pouchput
+    (println om/query->ast pouchput)
+    (let [{[pouchput] :children} (om/query->ast pouchput)
+          query (get-in pouchput [:params])]
+     (println pouchput)))
+      ;; now we actually have the doc structure we want {:item "todo"}
+      ;; just need to merge with the id and other defaults
+     ;; (go
+       ;; (let [docs (<! (pouch/put-doc conn (merge query {:_id "11"})))]
+         ;; (println "pouch res: " docs)
+         ;; (let [new-doc (merge query {:_id (:id docs) :_rev (:rev docs)})]
+           ;; (println "new doc: " new-doc))))))
+           ;; does it merge?
+          ;(cb {:alldocs new-doc}))))))
   (when pouchpull
+    (println "trying to pull")
     (go
       (let [docs (<! (pouch/all-docs conn {:include_docs true}))]
         (as->
