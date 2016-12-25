@@ -12,7 +12,7 @@
 
 (enable-console-print!)
 
-(def conn (pouch/create-db "caterpillardb"))
+(def conn (pouch/create-db "test-caterpillar"))
 
 (def init-todos [{:_id "1" :item "do the dishes"}
                  {:_id "2" :item "take out the trash"}])
@@ -33,16 +33,6 @@
     {:value (get st key nil)}))
   
 (defmulti mutate om/dispatch)
-
-(defmethod mutate 'item/replace
-  [{:keys [state]} key params]
-  (println "TRYING NEW: " state)
-  (println "params: " params)
-  {:remote true
-   :action
-   (fn []
-     (println "action in mutate"))})
-  
 
 (defmethod mutate `pouchput
   [{:keys [state ast]} key params]
@@ -83,7 +73,8 @@
 (defui NewTodo
   static om/IQuery
   (query [this]
-         '[:pouchput])
+         ;'[:pouchput])
+         `[{:alldocs ~(om/get-query Row)}])
   static om/IQueryParams
   (params [_]
           {:todo-input ""})
@@ -128,7 +119,7 @@
       
       (let [id (:_id query)
             nitem {:item/by-id {id {:_id id :item "I JUST CHANGED YOU"}}}]
-        (cb nitem [:alldocs]))))
+        (cb nitem pouchput))))
       ;; just need to merge with the id and other defaults
      ;; (go
        ;; (let [docs (<! (pouch/put-doc conn (merge query {:_id "11"})))]
@@ -138,7 +129,6 @@
            ;; does it merge?
           ;(cb {:alldocs new-doc}))))))
   (when alldocs
-    (println "are we trying?")
     (go
       (let [docs (<! (pouch/all-docs conn {:include_docs true}))]
         (as->
