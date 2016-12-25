@@ -12,7 +12,7 @@
 
 (enable-console-print!)
 
-(def conn (pouch/create-db "test-caterpillar"))
+(def conn (pouch/create-db "caterpillardb"))
 
 (def init-todos [{:_id "1" :item "do the dishes"}
                  {:_id "2" :item "take out the trash"}])
@@ -127,9 +127,8 @@
           query (get-in pouchput [:params])]
       
       (let [id (:_id query)
-            nitem ;[[:item/by-id id] 
-                   {:_id id :item "I JUST CHANGED YOU"}]
-        (cb nitem))))
+            nitem {:item/by-id {id {:_id id :item "I JUST CHANGED YOU"}}}]
+        (cb nitem [:alldocs]))))
       ;; just need to merge with the id and other defaults
      ;; (go
        ;; (let [docs (<! (pouch/put-doc conn (merge query {:_id "11"})))]
@@ -148,9 +147,18 @@
           (cb {:alldocs v}))))))
 
 
-(defn def-merge [reconciler state res query]
-  {:keys    (into [] (remove symbol?) (keys res))
-   :next    (om/merge-novelty! reconciler state res query)})
+(defn deep-merge
+  "Recursively merges maps. If keys are not maps, the last value wins."
+  [& vals]
+  (if (every? map? vals)
+    (apply merge-with deep-merge vals)
+    (last vals)))
+              
+(defn merge-tree [old-state res]
+  (println "old-state: " old-state)
+  (println "res: " res)
+  (println "merged-state: " (deep-merge old-state res))
+  (deep-merge old-state res))
 
 (def init-data (atom {}))
 
@@ -161,8 +169,9 @@
      :normalize true
      :send    send-to-pouch
      :remotes [:alldocs :pouchput]
-     :merge def-merge}))
+     :merge-tree merge-tree}))
 
 
 (om/add-root! reconciler TodoList
+  (gdom/getElement "app")
   (gdom/getElement "app"))
