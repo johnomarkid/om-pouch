@@ -47,7 +47,7 @@
                       (update v :item/by-id merge {id params}))))))
   :pouchput ast})
 
-(defui Row
+(defui ^:once Row
   static om/Ident
   (ident [this {:keys [_id]}]
          [:item/by-id _id])
@@ -61,7 +61,7 @@
 
 (def row-view (om/factory Row {:keyfn :_id}))
 
-(defui ListView
+(defui ^:once ListView
   Object
   (render [this]
           (let [list (om/props this)]
@@ -70,7 +70,7 @@
 
 (def list-view (om/factory ListView))
 
-(defui NewTodo
+(defui ^:once NewTodo
   static om/IQuery
   (query [this]
          ;'[:pouchput])
@@ -98,7 +98,7 @@
 
 (def new-todo (om/factory NewTodo))
 
-(defui TodoList
+(defui ^:once TodoList
   static om/IQuery
   (query [this]
     (let [subquery (om/get-query Row)]

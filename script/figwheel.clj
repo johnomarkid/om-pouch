@@ -2,10 +2,7 @@
          '[figwheel-sidecar.repl-api :as ra])
 
 (ra/start-figwheel!
-  {:figwheel-options
-   {:nrepl-port 7888
-    :nrepl-middleware  ["cider.nrepl/cider-middleware"
-                        "cemerick.piggieback/wrap-cljs-repl"]}
+  {:figwheel-options {}
    :build-ids ["dev"]
    :all-builds
    [{:id "dev"
