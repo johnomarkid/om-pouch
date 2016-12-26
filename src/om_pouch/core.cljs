@@ -118,7 +118,7 @@
           query (get-in pouchput [:params])]
       
       (let [id (:_id query)
-            stable-id 1234
+            stable-id (random-uuid)
             result {'pouchput {:tempids {[:item/by-id id] [:item/by-id stable-id]}}
                     [:item/by-id stable-id] {:_id stable-id :item (str (:item query) " - I JUST CHANGED YOU")}}]
         (cb result))))
