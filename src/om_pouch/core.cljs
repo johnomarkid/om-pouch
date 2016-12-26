@@ -5,7 +5,7 @@
            [om.next :as om :refer-macros [defui]]
            [om.dom :as dom]
            [clojure.string :as string]
-           [caterpillar.pouch :as pouch]
+           [om-pouch.pouch :as pouch]
            [cljsjs.pouchdb])
  (:import [goog Uri]
           [goog.net Jsonp]))
@@ -31,7 +31,7 @@
   [{:keys [state ast]} key params]
   (let [st @state]
     {:value (get st key nil)}))
-  
+
 (defmulti mutate om/dispatch)
 
 (defmethod mutate `pouchput
@@ -107,7 +107,7 @@
   (render [this]
     (let [{:keys [alldocs]} (om/props this)]
       (dom/div nil
-        (dom/h2 nil "Pouch Todos")
+        (dom/h2 nil "Pouch Todos!!!")
         (list-view alldocs)
         (new-todo (om/computed {} {:parent this}))))))
 
@@ -119,6 +119,7 @@
       
       (let [id (:_id query)
             nitem {:item/by-id {id {:_id id :item "I JUST CHANGED YOU"}}}]
+        (println "pouchput: " pouchput)
         (cb nitem pouchput))))
       ;; just need to merge with the id and other defaults
      ;; (go
@@ -152,7 +153,7 @@
 
 (def init-data (atom {}))
 
-(def reconciler
+(defonce reconciler
   (om/reconciler
     {:state   init-data
      :parser  (om/parser {:read read :mutate mutate})
@@ -160,6 +161,14 @@
      :send    send-to-pouch
      :remotes [:alldocs :pouchput]
      :merge-tree merge-tree}))
+
+(comment
+ (deref reconciler)
+
+ (+ 1 2)
+ (println "abcdefg")
+
+ )
 
 
 (om/add-root! reconciler TodoList

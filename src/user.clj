@@ -1,11 +1,14 @@
-(require '[figwheel-sidecar.repl :as r]
-         '[figwheel-sidecar.repl-api :as ra])
+(ns user
+  (:require
+   [figwheel-sidecar.repl :as r]
+   [figwheel-sidecar.repl-api :as ra]
+   ))
 
-(ra/start-figwheel!
-  {:figwheel-options
-   {:nrepl-port 7888
-    :nrepl-middleware  ["cider.nrepl/cider-middleware"
-                        "cemerick.piggieback/wrap-cljs-repl"]}
+
+(defn start
+  []
+  (ra/start-figwheel!
+  {:figwheel-options {}
    :build-ids ["dev"]
    :all-builds
    [{:id "dev"
@@ -16,5 +19,11 @@
                 :output-to "resources/public/js/main.js"
                 :output-dir "resources/public/js"
                 :verbose true}}]})
+  )
 
-(ra/cljs-repl)
+(comment
+ (ra/fig-status)
+ )
+
+
+

@@ -1,4 +1,4 @@
-(ns caterpillar.pouch 
+(ns om-pouch.pouch
  (:require [cljsjs.pouchdb]
            [cljs.core.async :refer [<! >! put! chan close!]])
  (:require-macros [cljs.core.async.macros :refer [go]]))
