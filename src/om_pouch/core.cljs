@@ -24,7 +24,7 @@
   (let [st @state]
     (println "sssst: " st)
     (if (contains? st key)
-      {:value (into [] (map #(get-in st %)) (get st key))}
+      {:value (om/db->tree query (key st) st)}
       {:alldocs ast})))
 
 (defmethod read :default
@@ -118,9 +118,10 @@
           query (get-in pouchput [:params])]
       
       (let [id (:_id query)
-            nitem {:item/by-id {id {:_id id :item "I JUST CHANGED YOU"}}}]
-        (println "pouchput: " pouchput)
-        (cb nitem pouchput))))
+            stable-id 1234
+            result {'pouchput {:tempids {[:item/by-id id] [:item/by-id stable-id]}}
+                    [:item/by-id stable-id] {:_id stable-id :item (str (:item query) " - I JUST CHANGED YOU")}}]
+        (cb result))))
       ;; just need to merge with the id and other defaults
      ;; (go
        ;; (let [docs (<! (pouch/put-doc conn (merge query {:_id "11"})))]
