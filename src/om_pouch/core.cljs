@@ -5,7 +5,7 @@
            [om.next :as om :refer-macros [defui]]
            [om.dom :as dom]
            [clojure.string :as string]
-           [caterpillar.pouch :as pouch]
+           [om-pouch.pouch :as pouch]
            [cljsjs.pouchdb])
  (:import [goog Uri]
           [goog.net Jsonp]))
@@ -24,14 +24,14 @@
   (let [st @state]
     (println "sssst: " st)
     (if (contains? st key)
-      {:value (into [] (map #(get-in st %)) (get st key))}
+      {:value (om/db->tree query (key st) st)}
       {:alldocs ast})))
 
 (defmethod read :default
   [{:keys [state ast]} key params]
   (let [st @state]
     {:value (get st key nil)}))
-  
+
 (defmulti mutate om/dispatch)
 
 (defmethod mutate `pouchput
@@ -47,7 +47,7 @@
                       (update v :item/by-id merge {id params}))))))
   :pouchput ast})
 
-(defui Row
+(defui ^:once Row
   static om/Ident
   (ident [this {:keys [_id]}]
          [:item/by-id _id])
@@ -61,7 +61,7 @@
 
 (def row-view (om/factory Row {:keyfn :_id}))
 
-(defui ListView
+(defui ^:once ListView
   Object
   (render [this]
           (let [list (om/props this)]
@@ -70,7 +70,7 @@
 
 (def list-view (om/factory ListView))
 
-(defui NewTodo
+(defui ^:once NewTodo
   static om/IQuery
   (query [this]
          ;'[:pouchput])
@@ -98,7 +98,7 @@
 
 (def new-todo (om/factory NewTodo))
 
-(defui TodoList
+(defui ^:once TodoList
   static om/IQuery
   (query [this]
     (let [subquery (om/get-query Row)]
@@ -107,7 +107,7 @@
   (render [this]
     (let [{:keys [alldocs]} (om/props this)]
       (dom/div nil
-        (dom/h2 nil "Pouch Todos")
+        (dom/h2 nil "Pouch Todos!!!")
         (list-view alldocs)
         (new-todo (om/computed {} {:parent this}))))))
 
@@ -118,8 +118,10 @@
           query (get-in pouchput [:params])]
       
       (let [id (:_id query)
-            nitem {:item/by-id {id {:_id id :item "I JUST CHANGED YOU"}}}]
-        (cb nitem pouchput))))
+            stable-id (random-uuid)
+            result {'pouchput {:tempids {[:item/by-id id] [:item/by-id stable-id]}}
+                    [:item/by-id stable-id] {:_id stable-id :item (str (:item query) " - I JUST CHANGED YOU")}}]
+        (cb result))))
       ;; just need to merge with the id and other defaults
      ;; (go
        ;; (let [docs (<! (pouch/put-doc conn (merge query {:_id "11"})))]
@@ -152,7 +154,7 @@
 
 (def init-data (atom {}))
 
-(def reconciler
+(defonce reconciler
   (om/reconciler
     {:state   init-data
      :parser  (om/parser {:read read :mutate mutate})
@@ -160,6 +162,14 @@
      :send    send-to-pouch
      :remotes [:alldocs :pouchput]
      :merge-tree merge-tree}))
+
+(comment
+ (deref reconciler)
+
+ (+ 1 2)
+ (println "abcdefg")
+
+ )
 
 
 (om/add-root! reconciler TodoList
