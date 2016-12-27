@@ -116,11 +116,10 @@
   (when pouchput
     (let [{[pouchput] :children} (om/query->ast pouchput)
           query (get-in pouchput [:params])]
-      
       (let [id (:_id query)
             stable-id (random-uuid)
             result {'pouchput {:tempids {[:item/by-id id] [:item/by-id stable-id]}}
-                    [:item/by-id stable-id] {:_id stable-id :item (str (:item query) " - I JUST CHANGED YOU")}}]
+                    [:item/by-id id] {:_id stable-id :item (str (:item query) " - I JUST CHANGED YOU")}}]
         (cb result))))
       ;; just need to merge with the id and other defaults
      ;; (go
@@ -165,6 +164,8 @@
 
 (comment
  (deref reconciler)
+
+ (-> (deref reconciler) :item/by-id keys)
 
  (+ 1 2)
  (println "abcdefg")
